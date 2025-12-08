@@ -1,0 +1,11 @@
+# Go
+/bin/
+/vendor/
+*.exe
+*.test
+
+# Environment
+.env
+
+# Docker
+mysql_data
