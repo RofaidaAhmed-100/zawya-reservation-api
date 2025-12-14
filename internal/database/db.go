@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"movie-reservation-api/internal/models"
+	"zawyaReservation/internal/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
