@@ -37,6 +37,7 @@ func Migrate() {
 		&models.Movie{},
 		&models.Hall{},
 		&models.Seat{},
+		&models.Showtime{},
 	)
 
 	if err != nil {
