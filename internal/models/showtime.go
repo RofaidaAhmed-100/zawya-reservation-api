@@ -2,7 +2,6 @@ package models
 
 import (
 	"time"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -13,7 +12,8 @@ type Showtime struct {
 	HallID    string    `gorm:"type:char(36);not null" json:"hall_id"`
 	StartTime time.Time `gorm:"not null" json:"start_time"`
 	EndTime   time.Time `gorm:"not null" json:"end_time"`
-	BasePrice float64   `gorm:"type:decimal(10,2);not null" json:"base_price"`
+	BasePrice uint64    `gorm:"not null" json:"base_price"`
+	Currency  string    `gorm:"type:char(3);not null;default:'EGP'" json:"currency"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 

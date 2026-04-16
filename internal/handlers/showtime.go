@@ -3,6 +3,7 @@ package handlers
 import (
 	"zawyaReservation/internal/database"
 	"zawyaReservation/internal/models"
+	"zawyaReservation/internal/money"  
 	"net/http"
 	"time"
 
@@ -14,14 +15,17 @@ type CreateShowtimeRequest struct {
 	HallID    string    `json:"hall_id" binding:"required"`
 	StartTime time.Time `json:"start_time" binding:"required"`
 	BasePrice float64   `json:"base_price" binding:"required"`
+	Currency  string    `json:"currency" binding:"required"`
 }
+
 
 type SeatAvailability struct {
 	Seat      models.Seat `json:"seat"`
-	Available bool        `json:"available"`
-	Price     float64     `json:"price"`
+	Available   bool          `json:"available"`
+	Price       uint64        `json:"price"`        
+	PriceFloat  float64       `json:"price_float"`  
+	Currency    string        `json:"currency"`
 }
-
 
 func CreateShowtime(c *gin.Context) {
 	var req CreateShowtimeRequest
@@ -57,13 +61,27 @@ func CreateShowtime(c *gin.Context) {
 	}
 
 	
-	showtime := models.Showtime{
-		MovieID:   req.MovieID,
-		HallID:    req.HallID,
-		StartTime: req.StartTime,
-		EndTime:   endTime,
-		BasePrice: req.BasePrice,
-	}
+	
+currency := req.Currency
+if currency == "" {
+	currency = "EGP" 
+}
+
+moneyValue, err := money.NewFromFloat(req.BasePrice, money.Currency(currency))
+if err != nil {
+	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid price or currency"})
+	return
+}
+
+
+showtime := models.Showtime{
+	MovieID:   req.MovieID,
+	HallID:    req.HallID,
+	StartTime: req.StartTime,
+	EndTime:   endTime,
+	BasePrice: moneyValue.Amount,
+	Currency:  string(moneyValue.Currency),
+}
 
 	if err := database.DB.Create(&showtime).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create showtime"})
@@ -130,14 +148,16 @@ func GetAvailableSeats(c *gin.Context) {
 
 	
 	var availability []SeatAvailability
-	for _, seat := range seats {
-		price := calculateSeatPrice(showtime.BasePrice, seat.SeatType)
-		availability = append(availability, SeatAvailability{
-			Seat:      seat,
-			Available: true,
-			Price:     price,
-		})
-	}
+for _, seat := range seats {
+	priceMoney := calculateSeatPrice(showtime.BasePrice, showtime.Currency, seat.SeatType)
+	availability = append(availability, SeatAvailability{
+		Seat:       seat,
+		Available:  true,
+		Price:      priceMoney.Amount,
+		PriceFloat: priceMoney.ToFloat(),
+		Currency:   string(priceMoney.Currency),
+	})
+}
 
 	c.JSON(http.StatusOK, gin.H{
 		"showtime":     showtime,
@@ -146,15 +166,26 @@ func GetAvailableSeats(c *gin.Context) {
 }
 
 
-func calculateSeatPrice(basePrice float64, seatType string) float64 {
+func calculateSeatPrice(baseAmount uint64, currency string, seatType string) *money.Money {
+	baseMoney := money.New(baseAmount, money.Currency(currency))
+	
+	var result *money.Money
+	var err error
+	
 	switch seatType {
 	case "premium":
-		return basePrice * 1.5 // 50% more
+		result, err = baseMoney.MultiplyFloat(1.5)
 	case "vip":
-		return basePrice * 2.0 // 100% more (double)
+		result, err = baseMoney.MultiplyFloat(2.0) 
 	default:
-		return basePrice
+		result = baseMoney
 	}
+	
+	if err != nil {
+		return baseMoney 
+	}
+	
+	return result
 }
 
 
