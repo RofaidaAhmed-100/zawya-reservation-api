@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"time"
 	"zawyaReservation/internal/database"
 	"zawyaReservation/internal/models"
@@ -48,6 +49,12 @@ func CreateMovie(c *gin.Context) {
 		return
 	}
 
+	req.Title = strings.TrimSpace(req.Title)
+	req.Description = strings.TrimSpace(req.Description)
+	req.Genre = strings.TrimSpace(req.Genre)
+	req.Rating = strings.TrimSpace(req.Rating)
+	req.PosterURL = strings.TrimSpace(req.PosterURL)
+
 	movie := models.Movie{
 		Title:           req.Title,
 		Description:     req.Description,
@@ -83,6 +90,12 @@ func UpdateMovie(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	req.Title = strings.TrimSpace(req.Title)
+	req.Description = strings.TrimSpace(req.Description)
+	req.Genre = strings.TrimSpace(req.Genre)
+	req.Rating = strings.TrimSpace(req.Rating)
+	req.PosterURL = strings.TrimSpace(req.PosterURL)
 
 	movie.Title = req.Title
 	movie.Description = req.Description

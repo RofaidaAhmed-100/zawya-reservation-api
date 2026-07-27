@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"time"
 	"zawyaReservation/internal/database"
 	"zawyaReservation/internal/models"
@@ -32,6 +33,10 @@ func CreateShowtime(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	req.MovieID = strings.TrimSpace(req.MovieID)
+	req.HallID = strings.TrimSpace(req.HallID)
+	req.Currency = strings.TrimSpace(req.Currency)
 
 	var movie models.Movie
 	if err := database.DB.First(&movie, "id = ?", req.MovieID).Error; err != nil {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"zawyaReservation/internal/database"
 	"zawyaReservation/internal/models"
 
@@ -55,6 +56,8 @@ func CreateHall(c *gin.Context) {
 		return
 	}
 
+	req.Name = strings.TrimSpace(req.Name)
+
 	hall := models.Hall{
 		Name:       req.Name,
 		TotalSeats: req.TotalSeats,
@@ -85,6 +88,8 @@ func UpdateHall(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	req.Name = strings.TrimSpace(req.Name)
 
 	hall.Name = req.Name
 	hall.TotalSeats = req.TotalSeats
