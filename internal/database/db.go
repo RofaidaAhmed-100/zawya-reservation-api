@@ -46,3 +46,16 @@ func Migrate() {
 
 	log.Println("Database migration completed")
 }
+
+func Close() {
+	sqlDB, err := DB.DB()
+	if err != nil {
+		log.Println("Failed to get underlying DB:", err)
+		return
+	}
+	if err := sqlDB.Close(); err != nil {
+		log.Println("Failed to close database connection:", err)
+		return
+	}
+	log.Println("Database connection closed")
+}
