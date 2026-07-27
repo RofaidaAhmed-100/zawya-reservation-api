@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 	"zawyaReservation/internal/database"
 	"zawyaReservation/internal/handlers"
 	"zawyaReservation/internal/middleware"
@@ -44,7 +45,10 @@ func main() {
 		AllowCredentials: false,
 	}))
 
+	authLimiter := middleware.NewRateLimiter(10, time.Minute)
+
 	auth := router.Group("/api/auth")
+	auth.Use(authLimiter.Middleware())
 	{
 		auth.POST("/register", handlers.Register)
 		auth.POST("/login", handlers.Login)
