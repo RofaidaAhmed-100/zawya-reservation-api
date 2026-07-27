@@ -9,7 +9,7 @@ import (
 )
 
 type visitor struct {
-	count    int
+	count     int
 	firstSeen time.Time
 }
 

@@ -140,11 +140,24 @@ func GetAvailableSeats(c *gin.Context) {
 	database.DB.Where("hall_id = ?", showtime.HallID).Order("row_number, seat_number").Find(&seats)
 
 	var availability []SeatAvailability
+
+	var reservedSeatIDs []string
+	database.DB.Table("reservation_seats").
+		Joins("JOIN reservations ON reservations.id = reservation_seats.reservation_id").
+		Where("reservations.showtime_id = ? AND reservations.status = ?", showtimeID, "confirmed").
+		Pluck("reservation_seats.seat_id", &reservedSeatIDs)
+
+	reservedSet := make(map[string]bool, len(reservedSeatIDs))
+	for _, id := range reservedSeatIDs {
+		reservedSet[id] = true
+	}
+
 	for _, seat := range seats {
 		priceMoney := calculateSeatPrice(showtime.BasePrice, showtime.Currency, seat.SeatType)
+		available := !reservedSet[seat.ID]
 		availability = append(availability, SeatAvailability{
 			Seat:       seat,
-			Available:  true,
+			Available:  available,
 			Price:      priceMoney.Amount,
 			PriceFloat: priceMoney.ToFloat(),
 			Currency:   string(priceMoney.Currency),

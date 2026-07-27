@@ -74,6 +74,11 @@ func main() {
 
 		api.GET("/showtimes/:id", handlers.GetShowtime)
 		api.GET("/showtimes/:id/seats", handlers.GetAvailableSeats)
+
+		api.POST("/reservations", handlers.CreateReservation)
+		api.GET("/reservations", handlers.GetUserReservations)
+		api.GET("/reservations/:id", handlers.GetReservation)
+		api.DELETE("/reservations/:id", handlers.CancelReservation)
 	}
 
 	admin := router.Group("/api/admin")
