@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"zawyaReservation/internal/database"
-	"zawyaReservation/internal/models"
-	"zawyaReservation/internal/money"  
 	"net/http"
 	"time"
+	"zawyaReservation/internal/database"
+	"zawyaReservation/internal/models"
+	"zawyaReservation/internal/money"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,13 +18,12 @@ type CreateShowtimeRequest struct {
 	Currency  string    `json:"currency" binding:"required"`
 }
 
-
 type SeatAvailability struct {
-	Seat      models.Seat `json:"seat"`
-	Available   bool          `json:"available"`
-	Price       uint64        `json:"price"`        
-	PriceFloat  float64       `json:"price_float"`  
-	Currency    string        `json:"currency"`
+	Seat       models.Seat `json:"seat"`
+	Available  bool        `json:"available"`
+	Price      uint64      `json:"price"`
+	PriceFloat float64     `json:"price_float"`
+	Currency   string      `json:"currency"`
 }
 
 func CreateShowtime(c *gin.Context) {
@@ -34,14 +33,12 @@ func CreateShowtime(c *gin.Context) {
 		return
 	}
 
-	
 	var movie models.Movie
 	if err := database.DB.First(&movie, "id = ?", req.MovieID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Movie not found"})
 		return
 	}
 
-	
 	var hall models.Hall
 	if err := database.DB.First(&hall, "id = ?", req.HallID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Hall not found"})
@@ -50,38 +47,34 @@ func CreateShowtime(c *gin.Context) {
 
 	endTime := req.StartTime.Add(time.Duration(movie.DurationMinutes) * time.Minute)
 
-	
 	var overlapping models.Showtime
 	err := database.DB.Where("hall_id = ? AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?))",
 		req.HallID, req.StartTime, req.StartTime, endTime, endTime).First(&overlapping).Error
-	
+
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Hall is already booked for this time slot"})
 		return
 	}
 
-	
-	
-currency := req.Currency
-if currency == "" {
-	currency = "EGP" 
-}
+	currency := req.Currency
+	if currency == "" {
+		currency = "EGP"
+	}
 
-moneyValue, err := money.NewFromFloat(req.BasePrice, money.Currency(currency))
-if err != nil {
-	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid price or currency"})
-	return
-}
+	moneyValue, err := money.NewFromFloat(req.BasePrice, money.Currency(currency))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid price or currency"})
+		return
+	}
 
-
-showtime := models.Showtime{
-	MovieID:   req.MovieID,
-	HallID:    req.HallID,
-	StartTime: req.StartTime,
-	EndTime:   endTime,
-	BasePrice: moneyValue.Amount,
-	Currency:  string(moneyValue.Currency),
-}
+	showtime := models.Showtime{
+		MovieID:   req.MovieID,
+		HallID:    req.HallID,
+		StartTime: req.StartTime,
+		EndTime:   endTime,
+		BasePrice: moneyValue.Amount,
+		Currency:  string(moneyValue.Currency),
+	}
 
 	if err := database.DB.Create(&showtime).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create showtime"})
@@ -99,14 +92,12 @@ showtime := models.Showtime{
 func GetShowtimesForMovie(c *gin.Context) {
 	movieID := c.Param("id")
 
-	
 	var movie models.Movie
 	if err := database.DB.First(&movie, "id = ?", movieID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Movie not found"})
 		return
 	}
 
-	
 	var showtimes []models.Showtime
 	database.DB.Where("movie_id = ? AND start_time > ?", movieID, time.Now()).
 		Preload("Hall").
@@ -118,7 +109,6 @@ func GetShowtimesForMovie(c *gin.Context) {
 		"showtimes": showtimes,
 	})
 }
-
 
 func GetShowtime(c *gin.Context) {
 	showtimeID := c.Param("id")
@@ -135,29 +125,26 @@ func GetShowtime(c *gin.Context) {
 func GetAvailableSeats(c *gin.Context) {
 	showtimeID := c.Param("id")
 
-	
 	var showtime models.Showtime
 	if err := database.DB.First(&showtime, "id = ?", showtimeID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Showtime not found"})
 		return
 	}
 
-	
 	var seats []models.Seat
 	database.DB.Where("hall_id = ?", showtime.HallID).Order("row_number, seat_number").Find(&seats)
 
-	
 	var availability []SeatAvailability
-for _, seat := range seats {
-	priceMoney := calculateSeatPrice(showtime.BasePrice, showtime.Currency, seat.SeatType)
-	availability = append(availability, SeatAvailability{
-		Seat:       seat,
-		Available:  true,
-		Price:      priceMoney.Amount,
-		PriceFloat: priceMoney.ToFloat(),
-		Currency:   string(priceMoney.Currency),
-	})
-}
+	for _, seat := range seats {
+		priceMoney := calculateSeatPrice(showtime.BasePrice, showtime.Currency, seat.SeatType)
+		availability = append(availability, SeatAvailability{
+			Seat:       seat,
+			Available:  true,
+			Price:      priceMoney.Amount,
+			PriceFloat: priceMoney.ToFloat(),
+			Currency:   string(priceMoney.Currency),
+		})
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"showtime":     showtime,
@@ -165,29 +152,27 @@ for _, seat := range seats {
 	})
 }
 
-
 func calculateSeatPrice(baseAmount uint64, currency string, seatType string) *money.Money {
 	baseMoney := money.New(baseAmount, money.Currency(currency))
-	
+
 	var result *money.Money
 	var err error
-	
+
 	switch seatType {
 	case "premium":
 		result, err = baseMoney.MultiplyFloat(1.5)
 	case "vip":
-		result, err = baseMoney.MultiplyFloat(2.0) 
+		result, err = baseMoney.MultiplyFloat(2.0)
 	default:
 		result = baseMoney
 	}
-	
+
 	if err != nil {
-		return baseMoney 
+		return baseMoney
 	}
-	
+
 	return result
 }
-
 
 func DeleteShowtime(c *gin.Context) {
 	showtimeID := c.Param("id")

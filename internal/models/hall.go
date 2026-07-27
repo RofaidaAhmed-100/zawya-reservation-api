@@ -1,9 +1,9 @@
 package models
 
 import (
-	"time"
-	"gorm.io/gorm"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"time"
 )
 
 type Hall struct {
@@ -25,8 +25,8 @@ type Seat struct {
 	RowNumber  int    `gorm:"not null" json:"row_number"`
 	SeatNumber int    `gorm:"not null" json:"seat_number"`
 	SeatType   string `gorm:"type:varchar(50);default:'regular'" json:"seat_type"`
-	
-	Hall       Hall   `gorm:"foreignKey:HallID" json:"-"`
+
+	Hall Hall `gorm:"foreignKey:HallID" json:"-"`
 }
 
 func (s *Seat) BeforeCreate(tx *gorm.DB) error {

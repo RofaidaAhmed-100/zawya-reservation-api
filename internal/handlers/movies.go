@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"zawyaReservation/internal/database"
-	"zawyaReservation/internal/models"
 	"net/http"
 	"time"
+	"zawyaReservation/internal/database"
+	"zawyaReservation/internal/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +19,6 @@ type CreateMovieRequest struct {
 	ReleaseDate     time.Time `json:"release_date"`
 }
 
-
 func GetMovies(c *gin.Context) {
 	var movies []models.Movie
 	if err := database.DB.Find(&movies).Error; err != nil {
@@ -29,7 +28,6 @@ func GetMovies(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"movies": movies})
 }
-
 
 func GetMovie(c *gin.Context) {
 	movieID := c.Param("id")
@@ -105,9 +103,13 @@ func UpdateMovie(c *gin.Context) {
 	})
 }
 
-
 func DeleteMovie(c *gin.Context) {
 	movieID := c.Param("id")
+
+	if err := database.DB.Delete(&models.Showtime{}, "movie_id = ?", movieID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete movie showtimes"})
+		return
+	}
 
 	if err := database.DB.Delete(&models.Movie{}, "id = ?", movieID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete movie"})

@@ -7,7 +7,6 @@ import (
 
 type Currency string
 
-
 const (
 	EGP Currency = "EGP"
 	USD Currency = "USD"
@@ -19,10 +18,9 @@ const (
 
 type CurrencyInfo struct {
 	Code          Currency
-	MinorUnits    int   
-	MinorUnitName string 
+	MinorUnits    int
+	MinorUnitName string
 }
-
 
 var currencyInfo = map[Currency]CurrencyInfo{
 	EGP: {Code: EGP, MinorUnits: 2, MinorUnitName: "piasters"},
@@ -32,9 +30,10 @@ var currencyInfo = map[Currency]CurrencyInfo{
 	KWD: {Code: KWD, MinorUnits: 3, MinorUnitName: "fils"},
 	JPY: {Code: JPY, MinorUnits: 0, MinorUnitName: ""},
 }
+
 type Money struct {
-	Amount   uint64   `json:"amount"`   
-	Currency Currency `json:"currency"` 
+	Amount   uint64   `json:"amount"`
+	Currency Currency `json:"currency"`
 }
 
 func New(amount uint64, currency Currency) *Money {
@@ -50,14 +49,12 @@ func NewFromFloat(amount float64, currency Currency) (*Money, error) {
 		return nil, errors.New("unsupported currency")
 	}
 
-	
 	multiplier := uint64(1)
 	for i := 0; i < info.MinorUnits; i++ {
 		multiplier *= 10
 	}
 
-	
-	smallestUnit := uint64(amount * float64(multiplier))
+	smallestUnit := uint64(amount*float64(multiplier) + 0.5)
 
 	return &Money{
 		Amount:   smallestUnit,
@@ -82,14 +79,13 @@ func (m *Money) String() string {
 	return fmt.Sprintf("%."+fmt.Sprint(info.MinorUnits)+"f %s", m.ToFloat(), m.Currency)
 }
 
-
 func (m *Money) Add(other *Money) (*Money, error) {
 	if m.Currency != other.Currency {
 		return nil, errors.New("cannot add different currencies")
 	}
 
 	sum := m.Amount + other.Amount
-	if sum < m.Amount { 
+	if sum < m.Amount {
 		return nil, errors.New("addition overflow")
 	}
 
@@ -113,7 +109,6 @@ func (m *Money) Subtract(other *Money) (*Money, error) {
 	}, nil
 }
 
-
 func (m *Money) Multiply(factor uint64) (*Money, error) {
 	result := m.Amount * factor
 	if factor != 0 && result/factor != m.Amount {
@@ -126,13 +121,12 @@ func (m *Money) Multiply(factor uint64) (*Money, error) {
 	}, nil
 }
 
-
 func (m *Money) MultiplyFloat(factor float64) (*Money, error) {
 	if factor < 0 {
 		return nil, errors.New("factor cannot be negative")
 	}
 
-	result := uint64(float64(m.Amount)*factor + 0.5) 
+	result := uint64(float64(m.Amount)*factor + 0.5)
 
 	return &Money{
 		Amount:   result,
@@ -161,7 +155,6 @@ func (m *Money) GreaterThan(other *Money) (bool, error) {
 	}
 	return m.Amount > other.Amount, nil
 }
-
 
 func (m *Money) LessThan(other *Money) (bool, error) {
 	if m.Currency != other.Currency {

@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"net/http"
 	"zawyaReservation/internal/database"
 	"zawyaReservation/internal/models"
 	"zawyaReservation/internal/utils"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,7 +20,6 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-
 func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -28,20 +27,18 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	
 	var existingUser models.User
 	if err := database.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 		return
 	}
 
-	
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
-	 user := models.User{
+	user := models.User{
 		Email:    req.Email,
 		Password: hashedPassword,
 		Name:     req.Name,
@@ -53,7 +50,6 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	
 	token, err := utils.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
@@ -72,7 +68,6 @@ func Register(c *gin.Context) {
 	})
 }
 
-
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -80,19 +75,17 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	
 	var user models.User
 	if err := database.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	
-	if !utils.CheckPassword(user.Password, req.Password) {		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+	if !utils.CheckPassword(user.Password, req.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	
 	token, err := utils.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
@@ -110,7 +103,6 @@ func Login(c *gin.Context) {
 		},
 	})
 }
-
 
 func GetProfile(c *gin.Context) {
 	userID := c.GetString("user_id")

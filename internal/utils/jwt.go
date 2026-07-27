@@ -15,7 +15,6 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-
 func GenerateToken(userID, email, role string) (string, error) {
 	claims := Claims{
 		UserID: userID,

@@ -1,13 +1,12 @@
 package middleware
 
 import (
-	"zawyaReservation/internal/utils"
 	"net/http"
 	"strings"
+	"zawyaReservation/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
-
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -18,7 +17,6 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
@@ -34,7 +32,6 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		
 		c.Set("user_id", claims.UserID)
 		c.Set("user_email", claims.Email)
 		c.Set("user_role", claims.Role)
